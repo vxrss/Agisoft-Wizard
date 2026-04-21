@@ -17,7 +17,7 @@ class ProcessingDialog(QtWidgets.QDialog):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("FTP")
+        self.setWindowTitle("Wizard")
         self.setMinimumWidth(520)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -342,8 +342,8 @@ def start_gui():
         run_processing(dlg.get_params())
 
 try:
-    app.removeMenuItem("FTP/Wizard")
+    app.removeMenuItem("Wizard/Wizard")
 except:
     pass
 
-app.addMenuItem("FTP/Wizard", start_gui)
+app.addMenuItem("Wizard/Wizard", start_gui)
