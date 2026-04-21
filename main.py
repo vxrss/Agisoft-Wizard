@@ -22,7 +22,6 @@ class ProcessingDialog(QtWidgets.QDialog):
 
         layout = QtWidgets.QVBoxLayout(self)
 
-
         cam_group = QtWidgets.QGroupBox("Kamery")
         cam_layout = QtWidgets.QVBoxLayout(cam_group)
 
@@ -38,7 +37,6 @@ class ProcessingDialog(QtWidgets.QDialog):
         cam_layout.addWidget(self.cam_crs_lbl)
 
         layout.addWidget(cam_group)
-
 
         osn_group = QtWidgets.QGroupBox("Osnowa")
         osn_layout = QtWidgets.QVBoxLayout(osn_group)
@@ -56,7 +54,6 @@ class ProcessingDialog(QtWidgets.QDialog):
 
         layout.addWidget(osn_group)
 
-
         final_group = QtWidgets.QGroupBox("CRS wynikowy")
         final_layout = QtWidgets.QVBoxLayout(final_group)
 
@@ -67,7 +64,6 @@ class ProcessingDialog(QtWidgets.QDialog):
         final_layout.addWidget(self.final_crs_lbl)
 
         layout.addWidget(final_group)
-
 
         proc_group = QtWidgets.QGroupBox("Przetwarzanie")
         proc_layout = QtWidgets.QVBoxLayout(proc_group)
@@ -91,7 +87,6 @@ class ProcessingDialog(QtWidgets.QDialog):
 
         layout.addWidget(proc_group)
 
-
         btn_layout = QtWidgets.QHBoxLayout()
         self.run_btn = QtWidgets.QPushButton("START")
         self.cancel_btn = QtWidgets.QPushButton("ANULUJ")
@@ -100,13 +95,11 @@ class ProcessingDialog(QtWidgets.QDialog):
         btn_layout.addWidget(self.cancel_btn)
         layout.addLayout(btn_layout)
 
-
         self.photos_dir = None
         self.osn_file = None
         self.camera_crs = None
         self.osn_input_crs = None
         self.final_crs = None
-
 
         self.photos_btn.clicked.connect(self.select_photos)
         self.osn_btn.clicked.connect(self.select_osn)
@@ -172,15 +165,12 @@ def get_or_create_chunk():
         return doc.addChunk()
 
 
-
 def run_processing(p):
-
     doc = Metashape.app.document
     chunk = get_or_create_chunk()
 
     chunk.crs = p["final_crs"]
     chunk.camera_crs = p["camera_crs"]
-
 
     if len(chunk.cameras) == 0:
         photos = [
@@ -190,7 +180,6 @@ def run_processing(p):
         ]
         chunk.addPhotos(photos)
 
-
     if p["do_align"]:
         chunk.matchPhotos(
             downscale=p["downscale"],
@@ -198,7 +187,6 @@ def run_processing(p):
             reference_preselection=False
         )
         chunk.alignCameras()
-
 
     imported_markers = []
     if p["osn_file"]:
@@ -210,7 +198,6 @@ def run_processing(p):
 
                 name = parts[0]
                 x, y, z = map(float, parts[1:4])
-
 
                 loc = Metashape.Vector([y, x, z])
 
@@ -231,9 +218,8 @@ def run_processing(p):
         merge_markers=False
     )
 
-    
     if imported_markers and chunk.transform.matrix and chunk.crs:
-        
+
         detected_markers = [m for m in chunk.markers if m not in imported_markers and m.position is not None]
         matched_detected = set()
 
@@ -245,33 +231,26 @@ def run_processing(p):
             for m_det in detected_markers:
                 if m_det in matched_detected:
                     continue
-                
-                
+
                 pos_crs = chunk.crs.project(chunk.transform.matrix.mulp(m_det.position))
-                
-                
+
                 dist_3d = (pos_crs - loc).norm()
-                
+
                 if dist_3d < best_dist:
                     best_dist = dist_3d
                     best_m = m_det
 
-            
             if best_m and best_dist < 30.0:
-               
                 best_m.label = m_import.label
                 best_m.reference.location = m_import.reference.location
                 best_m.reference.enabled = True
                 matched_detected.add(best_m)
-                
-                
-                chunk.remove(m_import) 
-            
+
+                chunk.remove(m_import)
 
         to_remove = [m for m in detected_markers if m not in matched_detected]
         for m_det in to_remove:
             chunk.remove(m_det)
-       
 
     chunk.updateTransform()
 
@@ -287,7 +266,6 @@ def run_processing(p):
         adaptive_fitting=True
     )
 
-
     if p["do_dense"]:
         chunk.buildDepthMaps(
             downscale=p["downscale"],
@@ -299,7 +277,6 @@ def run_processing(p):
             point_confidence=True
         )
 
-
     if p["do_model"]:
         chunk.buildModel(
             source_data=Metashape.DepthMapsData,
@@ -308,7 +285,6 @@ def run_processing(p):
             face_count=Metashape.MediumFaceCount,
             build_texture=True
         )
-
 
     eo_txt = "Label X Y Z Omega Phi Kappa\n"
     for cam in chunk.cameras:
@@ -331,15 +307,14 @@ def run_processing(p):
     with open(eo_path, "w") as f:
         f.write(eo_txt)
 
-
     doc.save(os.path.join(p["photos_dir"], "projekt.psx"))
-
 
 
 def start_gui():
     dlg = ProcessingDialog()
     if dlg.exec_():
         run_processing(dlg.get_params())
+
 
 try:
     app.removeMenuItem("Wizard/Wizard")
